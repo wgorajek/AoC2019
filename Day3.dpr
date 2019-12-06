@@ -65,46 +65,49 @@ begin
   ClosestCross := 999999;
   ClosestCrossPartB := 999999;
   GridDictionary := TDictionary<TPoint,Integer>.Create;
-
-  for K := 0 to 1 do begin
-    LWireDataArray := LDataArray[K].Split([',']);
-    X := 0;
-    Y := 0;
-    LWireSign := K*2-1;
-    LWireLength := 0;
-    for I := 0 to Length(LWireDataArray) - 1 do
-    begin
-      LCommand := LWireDataArray[I].Remove(1);
-      LMove := StrToInt(Trim(LWireDataArray[I].Substring(1)));
-      if LCommand = 'U' then
+  try
+    for K := 0 to 1 do begin
+      LWireDataArray := LDataArray[K].Split([',']);
+      X := 0;
+      Y := 0;
+      LWireSign := K*2-1;
+      LWireLength := 0;
+      for I := 0 to Length(LWireDataArray) - 1 do
       begin
-        SetMove(X, Y, LMove, 0, -1, LWireLength, LWireSign);
-        Y := Y-LMove;
-      end else
-      if LCommand = 'D' then
-      begin
-        SetMove(X, Y, LMove, 0, 1, LWireLength, LWireSign);
-        Y := Y+LMove;
-      end else
-      if LCommand = 'L' then
-      begin
-        SetMove(X, Y, LMove, -1, 0, LWireLength, LWireSign);
-        X := X-LMove;
-      end else
-      if LCommand = 'R' then
-      begin
-        SetMove(X, Y, LMove, +1, 0, LWireLength, LWireSign);
-        X := X+LMove;
+        LCommand := LWireDataArray[I].Remove(1);
+        LMove := StrToInt(Trim(LWireDataArray[I].Substring(1)));
+        if LCommand = 'U' then
+        begin
+          SetMove(X, Y, LMove, 0, -1, LWireLength, LWireSign);
+          Y := Y-LMove;
+        end else
+        if LCommand = 'D' then
+        begin
+          SetMove(X, Y, LMove, 0, 1, LWireLength, LWireSign);
+          Y := Y+LMove;
+        end else
+        if LCommand = 'L' then
+        begin
+          SetMove(X, Y, LMove, -1, 0, LWireLength, LWireSign);
+          X := X-LMove;
+        end else
+        if LCommand = 'R' then
+        begin
+          SetMove(X, Y, LMove, +1, 0, LWireLength, LWireSign);
+          X := X+LMove;
+        end;
+        LWireLength := LWireLength+LMove*LWireSign;
       end;
-      LWireLength := LWireLength+LMove*LWireSign;
     end;
-  end;
 
-  if PartB then begin
-    Result := ClosestCrossPartB.ToString;
-  end else
-  begin
-    Result := ClosestCross.ToString;
+    if PartB then begin
+      Result := ClosestCrossPartB.ToString;
+    end else
+    begin
+      Result := ClosestCross.ToString;
+    end;
+  finally
+    GridDictionary.Free;
   end;
 end;
 
