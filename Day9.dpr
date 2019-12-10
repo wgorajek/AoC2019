@@ -26,6 +26,7 @@ type
     constructor Create(AProgramArray: TArray<Int64>); reintroduce;
     procedure Run;
     function GetValue(AValue, AMode : Int64) : Int64;
+    function GetIndexValue(AValue, AMode: Int64): Int64;
   end;
 
 
@@ -42,13 +43,11 @@ begin
 
 end;
 
-
-function PartB(AData : string): string;
+function PartA(AData : string; AInput : Integer): string;
 var
   DataArray : TArray<string>;
   I: Int64;
   ProgramArray : TArray<Int64>;
-//  AmplifierArray : TArray<TAmplifier>;
   LAmplifier : TAmplifier;
 begin
   DataArray := AData.Split([',']);
@@ -65,8 +64,7 @@ begin
   end;
 
   LAmplifier := TAmplifier.Create(ProgramArray);
-  LAmplifier.Input := 1;
-//  LAmplifier.Input := 0;
+  LAmplifier.Input := AInput;
 
   LAmplifier.Run;
 
@@ -76,6 +74,18 @@ end;
 constructor TAmplifier.Create(AProgramArray: TArray<Int64>);
 begin
   Reset(AProgramArray);
+end;
+
+function TAmplifier.GetIndexValue(AValue, AMode: Int64): Int64;
+begin
+  if AMode = 0  then
+  begin
+    Result := AValue;
+  end else if AMode = 2  then
+  begin
+    Result := AValue + RelativeBase;
+  end else
+    raise Exception.Create('Uknown Index Operation Mode ' + AMode.ToString);
 end;
 
 function TAmplifier.GetValue(AValue, AMode: Int64): Int64;
@@ -88,10 +98,7 @@ begin
     Result := ProgramArray[AValue];
   end else if AMode = 2  then
   begin
-    if (AValue + RelativeBase> 9999) then
-      Writeln(AValue);
-
-    Result := AValue + RelativeBase;
+    Result := ProgramArray[AValue + RelativeBase];
   end else
     raise Exception.Create('Uknown Operation Mode ' + AMode.ToString);
 end;
@@ -112,25 +119,23 @@ end;
 
 procedure TAmplifier.Run;
 var
-  I, J: Int64;
+  I: Int64;
   InstructionA, InstructionB, InstructionC, InstructionDE : Int64;
 begin
   I := OperationPointer;
-  J := 0;
   while (Status = TASReady) and (ProgramArray[I] <> 99) do
   begin
-    Inc(J);
     InstructionDE := ProgramArray[I] mod 100;
     InstructionC := Floor((ProgramArray[I])/100) mod 10;
     InstructionB := Floor((ProgramArray[I])/1000) mod 10;
     InstructionA := Floor((ProgramArray[I])/10000) mod 10;
-    Writeln(ProgramArray[I].ToString + ' ' +  ProgramArray[I+1].ToString+ ' ' +  ProgramArray[I+2].ToString+ ' ' +  ProgramArray[I+3].ToString);
+//    Writeln(ProgramArray[I].ToString + ' ' +  ProgramArray[I+1].ToString+ ' ' +  ProgramArray[I+2].ToString+ ' ' +  ProgramArray[I+3].ToString);
     if InstructionDE in [1,2] then begin
-      ProgramArray[ProgramArray[I + 3]] := ExecProgram(InstructionDE, GetValue(ProgramArray[I + 1], InstructionC), GetValue(ProgramArray[I + 2], InstructionB));
+      ProgramArray[GetIndexValue(ProgramArray[I + 3], InstructionA)] := ExecProgram(InstructionDE, GetValue(ProgramArray[I + 1], InstructionC), GetValue(ProgramArray[I + 2], InstructionB));
       Inc(I, 4);
     end else if InstructionDE = 3 then begin
       if Input <> - 1  then begin
-        ProgramArray[GetValue(ProgramArray[I + 1], InstructionC)] := Input;
+        ProgramArray[GetIndexValue(ProgramArray[I + 1], InstructionC)] := Input;
         Input := -1;
         Inc(I, 2);
       end else
@@ -139,7 +144,6 @@ begin
       end;
     end else if InstructionDE = 4 then begin
       Output := GetValue(ProgramArray[I + 1], InstructionC);
-      Writeln('output = ' + Output.ToString);
       Inc(I, 2);
     end else if InstructionDE = 5 then begin
       if GetValue(ProgramArray[I + 1], InstructionC) <> 0 then
@@ -160,19 +164,19 @@ begin
     end else if InstructionDE = 7 then begin
       if GetValue(ProgramArray[I + 1], InstructionC) < GetValue(ProgramArray[I + 2], InstructionB)  then
       begin
-        ProgramArray[ProgramArray[I + 3]] := 1;
+        ProgramArray[GetIndexValue(ProgramArray[I + 3], InstructionA)] := 1;
       end else
       begin
-        ProgramArray[ProgramArray[I + 3]] := 0;
+        ProgramArray[GetIndexValue(ProgramArray[I + 3], InstructionA)] := 0;
       end;
       Inc(I, 4);
     end else if InstructionDE = 8 then begin
       if GetValue(ProgramArray[I + 1], InstructionC) = GetValue(ProgramArray[I + 2], InstructionB)  then
       begin
-        ProgramArray[ProgramArray[I + 3]] := 1;
+        ProgramArray[GetIndexValue(ProgramArray[I + 3], InstructionA)] := 1;
       end else
       begin
-        ProgramArray[ProgramArray[I + 3]] := 0;
+        ProgramArray[GetIndexValue(ProgramArray[I + 3], InstructionA)] := 0;
       end;
       Inc(I, 4);
     end else if InstructionDE = 9 then begin
@@ -192,9 +196,9 @@ end;
 begin
   try
 //    writeln(PartA(T_WGUtils.OpenFile('..\..\day9Test.txt')));
-//    writeln(PartA(T_WGUtils.OpenFile('..\..\day9.txt')));
+    writeln(PartA(T_WGUtils.OpenFile('..\..\day9.txt'), 1));
 //    writeln(PartB(T_WGUtils.OpenFile('..\..\day9Test.txt')));
-    writeln(PartB(T_WGUtils.OpenFile('..\..\day9.txt')));
+    writeln(PartA(T_WGUtils.OpenFile('..\..\day9.txt'), 2));
   except
     on E: Exception do
       Writeln(E.ClassName, ': ', E.Message);
