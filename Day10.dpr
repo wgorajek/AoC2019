@@ -8,7 +8,9 @@ uses
   System.Math,
   System.StrUtils,
   WGUtils,
+  System.Types,
   System.Generics.Collections,
+  System.Generics.Defaults,
   System.SysUtils;
 
 var
@@ -32,7 +34,8 @@ begin
   end;
 end;
 
-function CheckLocation(const AXPoint, AYPoint : Integer) : Integer;
+
+function GetVisibleAsteroids(const AXPoint, AYPoint : Integer) : TList<TPoint>;
 var
   I,J : Integer;
   X,Y : Integer;
@@ -41,8 +44,10 @@ var
   YVector : Integer;
   LGcd : Integer;
   DetectionStarMap : TArray<string>;
+  Comparison: TComparison<TPoint>;
+  AResult : TList<TPoint>;
 begin
-  Result := 0;
+  AResult := TList<TPoint>.Create;
   SetLength(DetectionStarMap, MaxY+1);
   for I := 1 to MaxY do begin
     SetLength(DetectionStarMap[I], MaxX+1);
@@ -76,11 +81,24 @@ begin
   for Y := 1 to MaxY do
     for X := 1 to MaxX do
     begin
-      if (StarMap[Y][X] = '#') and (DetectionStarMap[Y][X] = '.') then
-        Inc(Result);
+      if (StarMap[Y][X] = '#') and (DetectionStarMap[Y][X] = '.') then begin
+        DetectionStarMap[Y][X] := '#';
+        AResult.Add(TPoint.Create(X,Y));
+      end else
+      begin
+        DetectionStarMap[Y][X] := '.';
+      end;
     end;
-//  if Result = 8 then
-//    Writeln('A' + AXPoint.ToString + ' '  + AYPoint.ToString);
+
+  Result := AResult;
+
+end;
+
+function CheckLocation(const AXPoint, AYPoint : Integer) : Integer;
+begin
+  Result := GetVisibleAsteroids(AXPoint, AYPoint).Count;
+//  if Result = 214 then
+//    writeln(AXPoint.ToString  + ' ' + AYPoint.ToString);
 end;
 
 function PartA(AData : string): string;
@@ -92,15 +110,8 @@ begin
   MaxY := Length(StarMap)-1;
   MaxX := StarMap[1].Length;
 
-
-  for I := 1 to Length(StarMap)-1 do
-  begin
-    writeln(StarMap[I]);
-  end;
   for I := 1 to MaxY do
     for J := 1 to MaxX do
-//  for I := 1 to 1 do
-//    for J := 5 to 5 do
     begin
       if StarMap[I][J] = '#' then
       begin
@@ -108,22 +119,70 @@ begin
       end;
     end;
 
-
   Result := MaxResult.ToString;
 end;
 
 
-//function PartB(AData : string): string;
-//begin
-//
-//end;
+function PartB(AData : string): string;
+var
+  DestroyCounter : Integer;
+  VisibleAsteroids : TList<TPoint>;
+  AsteroidToDestroy : TPoint;
+  I, J: Integer;
+begin
 
 
+  StarMap := AData.Split([#13#10]);
+  MaxY := Length(StarMap)-1;
+  MaxX := StarMap[1].Length;
+
+
+  DestroyCounter := 0;
+  VisibleAsteroids := GetVisibleAsteroids(9, 17);
+
+
+  VisibleAsteroids.Sort(
+      TComparer<TPoint>.Construct(
+          function(const A1, B1: TPoint): Integer
+          var A, B: TPoint;
+          begin
+            A.X := A1.X-9;
+            A.Y := -(A1.Y-17);
+            B.X := B1.X-9;
+            B.Y := -(B1.Y-17);
+            if (A.X >= 0) and (B.X >= 0) then //--X >=0 is destoryed first so it doesnt matter
+              Result := A.X*100+A.Y - B.X*100-B.Y
+            else if (A.X < 0) and (B.X >=0)  then
+              Result := 1
+            else if (A.X >= 0) and (B.X < 0)  then
+              Result := -1
+            else //--thus really sorts last asteroids
+              Result := -1*Sign((A.Y/A.X - B.Y/B.X));
+          end
+        )
+    );
+
+  while DestroyCounter < 200 do
+  begin
+    AsteroidToDestroy := VisibleAsteroids.ExtractAt(0);
+    StarMap[AsteroidToDestroy.Y][AsteroidToDestroy.X] := '.';
+    Inc(DestroyCounter);
+  end;
+
+
+  Result := ((AsteroidToDestroy.X-1)*100 + (AsteroidToDestroy.Y-1)).ToString;
+end;
+
+
+function ComparePoints(Item1, Item2: TPoint): Integer;
+begin
+  Result := Item1.X - Item2.X;
+end;
 begin
   try
     writeln(PartA(T_WGUtils.OpenFile('..\..\day10.txt')));
 //    writeln(PartA(T_WGUtils.OpenFile('..\..\day10Test.txt')));
-//    writeln(PartB(T_WGUtils.OpenFile('..\..\day10.txt')));
+    writeln(PartB(T_WGUtils.OpenFile('..\..\day10.txt')));
   except
     on E: Exception do
       Writeln(E.ClassName, ': ', E.Message);
