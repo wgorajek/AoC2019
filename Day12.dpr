@@ -36,19 +36,19 @@ var
 begin
   MoonsList := TList<TMoon>.Create;
   try
-//    MoonsList.Add(TMoon.Create(19, -1, 7));
-//    MoonsList.Add(TMoon.Create(1, 2, 3));
-//    MoonsList.Add(TMoon.Create(14, -4, 1));
-//    MoonsList.Add(TMoon.Create(8, 7, -6));
+    MoonsList.Add(TMoon.Create(19, -10, 7));
+    MoonsList.Add(TMoon.Create(1, 2, -3));
+    MoonsList.Add(TMoon.Create(14, -4, 1));
+    MoonsList.Add(TMoon.Create(8, 7, -6));
 
-    MoonsList.Add(TMoon.Create(-1, 0, 2));
-    MoonsList.Add(TMoon.Create(2, -10, -7));
-    MoonsList.Add(TMoon.Create(4, 8, 8));
-    MoonsList.Add(TMoon.Create(3, 5, -1));
+//    MoonsList.Add(TMoon.Create(-1, 0, 2));
+//    MoonsList.Add(TMoon.Create(2, -10, -7));
+//    MoonsList.Add(TMoon.Create(4, -8, 8));
+//    MoonsList.Add(TMoon.Create(3, 5, -1));
 
     K := 0;
-//    while K < 1000 do
-    while K < 1 do
+    while K < 1000 do
+//    while K < 10 do
     begin
       for I := 0 to MoonsList.Count - 1 do
         for J := 0 to MoonsList.Count - 1 do
@@ -63,13 +63,18 @@ begin
       begin
         MoonsList[I].Move;
       end;
+
+//      for I := 0 to MoonsList.Count - 1 do
+//      begin
+//        Writeln(MoonsList[I].X.ToString + ' ' + MoonsList[I].Y.ToString + ' ' + MoonsList[I].Z.ToString
+//        + ' ' + MoonsList[I].VX.ToString + ' ' + MoonsList[I].VY.ToString + ' ' + MoonsList[I].VZ.ToString);
+//      end;
       Inc(K);
     end;
 
 
 
     Result := (MoonsList[0].getEnergy + MoonsList[1].getEnergy + MoonsList[2].getEnergy + MoonsList[3].getEnergy).ToString;
-    //51 nie    1655 nie
   finally
     MoonsList.Free;
   end;
@@ -111,7 +116,7 @@ end;
 
 function TMoon.GetEnergy: Integer;
 begin
-  Result := (X + Y + Z) * ( VX + VY + VZ);
+  Result := (Abs(X) + Abs(Y) + Abs(Z)) * ( Abs(VX) + Abs(VY) + Abs(VZ));
 end;
 
 procedure TMoon.Move;
