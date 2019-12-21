@@ -46,7 +46,7 @@ begin
 
 end;
 
-function PartA(AData : string; AIsPartB : Boolean = False): string;
+function PartA(AData : string): string;
 var
   DataArray : TArray<string>;
   I, J: Int64;
@@ -84,23 +84,109 @@ begin
       LAmplifier.Run;
       LOutput := LOutput + LAmplifier.GetOutput;
       LAmplifier.Reset(ProgramArray);
+	      end;
+  finally
+    LAmplifier.Free;
+  end;
+  Result := LOutput.tostring;
+end;
+
+function PartB(AData : string): string;
+var
+  DataArray : TArray<string>;
+  I, J: Int64;
+  ProgramArray : TArray<Int64>;
+  LAmplifier : TAmplifier;
+  LPosition : TPoint;
+  LOutput : Int64;
+  LLeftBorder : Int64;
+  LRightBorder : Int64;
+begin
+
+  DataArray := AData.Split([',']);
+  SetLength(ProgramArray, Length(DataArray)+99999999);
+
+  for I := 0 to Length(DataArray) - 1 do
+  begin
+    ProgramArray[I] := StrToInt64(Trim(DataArray[I]));
+  end;
+
+  for I := Length(DataArray) to 99999999 do
+  begin
+    ProgramArray[I] := 0;
+  end;
+  LPosition := TPoint.Create(500, 500);
+
+  LAmplifier := TAmplifier.Create(ProgramArray);
+  try
+    LAmplifier.Input := 0;
+    LOutput := 0;
+    I := 1050;
+    while True do
+    begin
+      var FoundLeftBorder := False;
+      //J := LLeftBorder;
+      J := Round(I*1.16); //from part A
+
+      var LastBeamValue := -1;
+      while not FoundLeftBorder do
+      begin
+        LAmplifier.Reset(ProgramArray);
+        LAmplifier.SetInput(I);
+        LAmplifier.Run;
+        LAmplifier.SetInput(J);
+        LAmplifier.Run;
+        var TmpOutput := LAmplifier.GetOutput;
+        if LastBeamValue < 0 then
+        begin
+          LastBeamValue := TmpOutput;
+        end else
+        begin
+          if TmpOutput <> LastBeamValue then
+          begin
+            FoundLeftBorder := True;
+            if TmpOutput = 1 then
+            begin
+              LLeftBorder := J;
+            end else
+            begin
+              LLeftBorder := J+1;
+            end;
+          end else begin
+            if LastBeamValue = 1 then
+            begin
+              Dec(J);
+            end else
+            begin
+              Inc(J);
+            end;
+          end;
+        end;
+      end;
+      if (I > 100) then
+      begin
+        LAmplifier.Reset(ProgramArray);
+        LAmplifier.SetInput(I-99);
+        LAmplifier.Run;
+        LAmplifier.SetInput(LLeftBorder+99);
+        LAmplifier.Run;
+        var TmpOutput := LAmplifier.GetOutput;
+        if TmpOutput = 1 then
+        begin
+          LOutput := (I-99)*10000 + LLeftBorder;
+          Writeln('found' + LOutput.ToString);
+          Break;
+        end else
+          Writeln('I = ' + I.ToString + ' J = ' +  LLeftBorder.ToString);
+      end;
+      Inc(I);
     end;
   finally
     LAmplifier.Free;
   end;
 
-  if not AIsPartB then
-  begin
-    Result := LOutput.tostring;
-  end else
-  begin
-    Result := 'partb';
-  end;
-end;
 
-function PartB(AData : string): string;
-begin
-    Result := 'tod';
+  Result := LOutput.ToString
 end;
 
 constructor TAmplifier.Create(AProgramArray: TArray<Int64>);
@@ -248,7 +334,7 @@ end;
 begin
   try
     writeln(PartA(T_WGUtils.OpenFile('..\..\day19.txt')));
-//    writeln(PartA(T_WGUtils.OpenFile('..\..\day19.txt'), True));
+//    writeln(PartB(T_WGUtils.OpenFile('..\..\day19.txt')));
   except
     on E: Exception do
       Writeln(E.ClassName, ': ', E.Message);
