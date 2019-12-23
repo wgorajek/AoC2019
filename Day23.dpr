@@ -26,7 +26,7 @@ type
     procedure Reset(AProgramArray : TArray<Int64>);
     constructor Create(AProgramArray: TArray<Int64>); reintroduce;
     destructor Destroy; override;
-    procedure Run(AIterations : Integer; ACode : Integer);
+    procedure Run(AIterations : Int64; ACode : Int64);
 
     function GetValue(AValue, AMode : Int64) : Int64;
     function GetIndexValue(AValue, AMode: Int64): Int64;
@@ -56,7 +56,7 @@ var
   LAmplifier : TAmplifier;
   LInputInstructions : string;
   NetworkArray : TArray<TAmplifier>;
-  NIC : TArray<TQueue<Integer>>;
+  NIC : TArray<TQueue<Int64>>;
   TmpInt : Int64;
 begin
 
@@ -79,7 +79,7 @@ begin
   begin
     NetworkArray[I] := TAmplifier.Create(ProgramArray);
     NetworkArray[I].SetInput(I);
-    NIC[I] := TQueue<Integer>.Create;
+    NIC[I] := TQueue<Int64>.Create;
   end;
 
   while True do
@@ -112,31 +112,6 @@ begin
       end;
     end;
   end;
-
-
-
-
-
-
-
-
-//  LAmplifier := TAmplifier.Create(ProgramArray);
-//  try
-//    while LAmplifier.Status <> TASFinished do
-//    begin
-//      LAmplifier.Run;
-//    end;
-//    for var TmpOutput in LAmplifier.Output do
-//    begin
-//      if TmpOutput < 1000 then
-//        write(chr(TmpOutput))
-//      else
-//        Result := TmpOutput.ToString;
-//    end;
-//  finally
-//    LAmplifier.Free;
-//  end;
-
 end;
 
 constructor TAmplifier.Create(AProgramArray: TArray<Int64>);
@@ -204,7 +179,7 @@ begin
   end;
 end;
 
-procedure TAmplifier.Run(AIterations : Integer; ACode : Integer);
+procedure TAmplifier.Run(AIterations : Int64; ACode : Int64);
 var
   I, J: Int64;
   InstructionA, InstructionB, InstructionC, InstructionDE : Int64;
