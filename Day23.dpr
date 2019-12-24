@@ -18,21 +18,21 @@ type
 
   TAmplifier = class
     ProgramArray : TArray<Int64>;
-    OperationPointer : Int64;
-    Status : TAmplifierStatus;
-    Output : TList<Int64>;
-    InputList : TList<Int64>;
-    RelativeBase : Int64;
-    procedure Reset(AProgramArray : TArray<Int64>);
-    constructor Create(AProgramArray: TArray<Int64>); reintroduce;
-    destructor Destroy; override;
-    procedure Run(AIterations : Int64; ACode : Int64);
-
-    function GetValue(AValue, AMode : Int64) : Int64;
-    function GetIndexValue(AValue, AMode: Int64): Int64;
-    procedure SetInput(AInput : Int64);
-    procedure SetInputStr(AInput : string);
-    function GetOutput : Int64;
+    private
+      function GetValue(AValue, AMode : Int64) : Int64;
+      function GetIndexValue(AValue, AMode: Int64): Int64;
+    public
+      OperationPointer : Int64;
+      Status : TAmplifierStatus;
+      Output : TList<Int64>;
+      InputList : TList<Int64>;
+      RelativeBase : Int64;
+      procedure Reset(AProgramArray : TArray<Int64>);
+      constructor Create(AProgramArray: TArray<Int64>); reintroduce;
+      destructor Destroy; override;
+      procedure Run(AIterations : Int64; ACode : Int64);
+      procedure SetInput(AInput : Int64);
+      function GetOutput : Int64;
   end;
 
 
@@ -48,17 +48,16 @@ begin
 
 end;
 
-function PartA(AData : string; IsPartB : Boolean = False): string;
+function PartA(AData : string): string;
 var
   DataArray : TArray<string>;
   I: Int64;
   ProgramArray : TArray<Int64>;
-  LAmplifier : TAmplifier;
-  LInputInstructions : string;
   NetworkArray : TArray<TAmplifier>;
   NIC : TArray<TQueue<Int64>>;
   TmpInt : Int64;
 begin
+
 
   DataArray := AData.Split([',']);
   SetLength(ProgramArray, Length(DataArray));
@@ -104,10 +103,92 @@ begin
         end else
         begin
           TmpInt := NetworkArray[I].GetOutput;
-          Writeln('x = ' + TmpInt.ToString);
           TmpInt := NetworkArray[I].GetOutput;
-          Writeln('y = ' + TmpInt.ToString);
+          Result := TmpInt.ToString;
           exit;
+        end;
+      end;
+    end;
+  end;
+end;
+
+function PartB(AData : string): string;
+var
+  DataArray : TArray<string>;
+  I: Int64;
+  ProgramArray : TArray<Int64>;
+  NetworkArray : TArray<TAmplifier>;
+  NIC : TArray<TQueue<Int64>>;
+  TmpInt : Int64;
+  NatX : Int64;
+  NatY : Int64;
+  PreviousNatY : Int64;
+begin
+  DataArray := AData.Split([',']);
+  SetLength(ProgramArray, Length(DataArray));
+  NatX := 0;
+  NatY := 0;
+
+  for I := 0 to Length(DataArray) - 1 do
+  begin
+    ProgramArray[I] := StrToInt64(Trim(DataArray[I]));
+  end;
+  for I := Length(DataArray) to Length(ProgramArray)-1 do
+  begin
+    ProgramArray[I] := 0;
+  end;
+
+
+  SetLength(NetworkArray, 50);
+  SetLength(NIC, 50);
+  for I := 0 to Length(NetworkArray) - 1 do
+  begin
+    NetworkArray[I] := TAmplifier.Create(ProgramArray);
+    NetworkArray[I].SetInput(I);
+    NIC[I] := TQueue<Int64>.Create;
+  end;
+
+  while True do
+  begin
+    var IsIddleStatus := True;
+    for I := 0 to Length(NetworkArray) - 1 do
+    begin
+      IsIddleStatus := IsIddleStatus and (NetworkArray[I].Status = TASWaitForInput);
+    end;
+
+    if IsIddleStatus then
+    begin
+      if PreviousNatY = NatY then
+      begin
+        Result := PreviousNatY.ToString;
+        Break;
+      end;
+      NetworkArray[0].SetInput(NatX);
+      NetworkArray[0].SetInput(NatY);
+      PreviousNatY := NatY;
+    end;
+
+    for I := 0 to Length(NetworkArray) - 1 do
+    begin
+      while NIC[I].Count >= 2 do
+      begin
+        NetworkArray[I].SetInput(NIC[I].Dequeue);
+        NetworkArray[I].SetInput(NIC[I].Dequeue);
+      end;
+      NetworkArray[I].Run(1, I);
+      while NetworkArray[I].Output.Count >= 3 do
+      begin
+        var TmpAdres := NetworkArray[I].GetOutput;
+        if TmpAdres <> 255 then
+        begin
+          TmpInt := NetworkArray[I].GetOutput;
+          NIC[TmpAdres].Enqueue(TmpInt);
+          TmpInt := NetworkArray[I].GetOutput;
+          NIC[TmpAdres].Enqueue(TmpInt);
+        end else
+        begin
+          NatX := NetworkArray[I].GetOutput;
+          NatY := NetworkArray[I].GetOutput;
         end;
       end;
     end;
@@ -153,13 +234,9 @@ begin
   end else if AMode = 0  then
   begin
     Result := ProgramArray[AValue];
-    if AValue > 999999 then
-      Writeln('!!!!');
   end else if AMode = 2  then
   begin
     Result := ProgramArray[AValue + RelativeBase];
-    if (AValue + RelativeBase) > 999999 then
-      Writeln('!!!!');
   end else
     raise Exception.Create('Uknown Operation Mode ' + AMode.ToString);
 end;
@@ -198,22 +275,15 @@ begin
     end else if InstructionDE = 3 then begin
       if InputList.Count > 0 then begin
         ProgramArray[GetIndexValue(ProgramArray[I + 1], InstructionC)] := InputList.ExtractAt(0);
-        if ACode = 4 then
-          Writeln('Input ' + ProgramArray[GetIndexValue(ProgramArray[I + 1], InstructionC)].ToString);
         Inc(I, 2);
       end else
       begin
-//        Status := TASWaitForInput;
         ProgramArray[GetIndexValue(ProgramArray[I + 1], InstructionC)] := -1;
-//        Writeln('Input -1');
         Inc(I, 2);
+        Status := TASWaitForInput;
       end;
     end else if InstructionDE = 4 then begin
-      var Tmp := GetValue(ProgramArray[I + 1], InstructionC);
-      Output.Add(Tmp);
-//      Output.Add(GetValue(ProgramArray[I + 1], InstructionC));
-      if ACode = 4 then
-        Writeln('output ' + (GetValue(ProgramArray[I + 1], InstructionC)).ToString);
+      Output.Add(GetValue(ProgramArray[I + 1], InstructionC));
       Inc(I, 2);
     end else if InstructionDE = 5 then begin
       if GetValue(ProgramArray[I + 1], InstructionC) <> 0 then
@@ -270,19 +340,11 @@ begin
   Status := TASReady;
 end;
 
-procedure TAmplifier.SetInputStr(AInput: string);
-begin
-  for var I := 1 to AInput.Length do
-  begin
-    InputList.Add(ord(AInput[I]));
-  end;
-  Status := TASReady;
-end;
 
 begin
   try
-    writeln(PartA(T_WGUtils.OpenFile('..\..\day23.txt')));
-//    writeln(PartA(T_WGUtils.OpenFile('..\..\day23.txt'), True));
+//    writeln(PartA(T_WGUtils.OpenFile('..\..\day23.txt')));
+    writeln(PartB(T_WGUtils.OpenFile('..\..\day23.txt')));
   except
     on E: Exception do
       Writeln(E.ClassName, ': ', E.Message);
