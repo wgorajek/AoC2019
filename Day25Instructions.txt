@@ -1,0 +1,33 @@
+north
+take dark matter
+east
+south
+take dehydrated water
+north
+east
+take bowl of rice
+west
+west
+north
+east
+south
+west
+take hypercube
+east
+take antenna
+north
+west
+north
+take manifold
+west
+take jam
+east
+east
+take candy cane
+west
+south
+south
+south
+west
+south
+west
